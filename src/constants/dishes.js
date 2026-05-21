@@ -1,0 +1,48 @@
+import { assets } from './assets';
+
+export const dishes = [
+  {
+    id: 'lumpia-sauce',
+    name: 'Lumpia with Sauce',
+    image: assets.dishOne,
+    x: 180,
+    y: 1505,
+    price: 8000,
+    description: 'Crisp golden rolls served with our bright house dipping sauce.',
+    ingredients: ['Ground meat mix', 'Shredded carrots', 'Garlic & onions', 'Crispy spring roll wrappers', 'Signature sweet & sour sauce'],
+    allergens: ['Gluten', 'Soy'],
+  },
+  {
+    id: 'fish-veggie',
+    name: 'Fish and Veggie',
+    image: assets.dishThree,
+    x: 475,
+    y: 1505,
+    price: 15000,
+    description: 'Pan-seared fish with market vegetables and a citrus herb finish.',
+    ingredients: ['Fresh seasonal fish fillet', 'Steam-blanched garden vegetables', 'Lemon-herb butter infusion', 'Microgreens'],
+    allergens: ['Fish', 'Dairy'],
+  },
+  {
+    id: 'tofu-chili',
+    name: 'Tofu Chili',
+    image: assets.dishFive,
+    x: 770,
+    y: 1505,
+    price: 11500,
+    description: 'Charred tofu tossed in a smoky chili glaze with fresh greens.',
+    ingredients: ['Organic firm tofu cubes', 'House chili paste glaze', 'Green onions', 'Sesame seed sprinkle', 'Baby spinach'],
+    allergens: ['Soy', 'Sesame'],
+  },
+  {
+    id: 'egg-cucumber',
+    name: 'Egg and Cucumber',
+    image: assets.dishFour,
+    x: 1065,
+    y: 1505,
+    price: 9000,
+    description: 'A sunny egg bowl layered with crisp cucumber and fragrant rice.',
+    ingredients: ['Pasture-raised egg', 'Crisp english cucumber', 'Steamed brown/jasmine rice mix', 'House special soy glaze'],
+    allergens: ['Egg', 'Soy', 'Gluten'],
+  },
+];
