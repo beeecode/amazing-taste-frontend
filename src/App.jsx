@@ -19,12 +19,19 @@ const PageLoader = () => (
 );
 
 export default function App() {
+  const normalizePathname = (pathname) => {
+    const normalized = pathname.replace(/\/+$/, '');
+    return normalized || '/';
+  };
+
   const getPageFromLocation = () => {
-    if (window.location.pathname === '/admin' || window.location.pathname === '/admin/login') return 'admin';
-    if (window.location.pathname === '/checkout') return 'checkout';
-    if (window.location.pathname === '/menu') return 'menu';
-    if (window.location.pathname === '/success') return 'success';
-    if (window.location.pathname === '/payment-failed' || window.location.pathname === '/failed') return 'payment-failed';
+    const pathname = normalizePathname(window.location.pathname);
+
+    if (pathname === '/admin' || pathname === '/admin/login') return 'admin';
+    if (pathname === '/checkout') return 'checkout';
+    if (pathname === '/menu') return 'menu';
+    if (pathname === '/success') return 'success';
+    if (pathname === '/payment-failed' || pathname === '/failed') return 'payment-failed';
     return 'landing';
   };
 

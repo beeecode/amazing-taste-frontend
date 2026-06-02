@@ -7,6 +7,11 @@
 const MOCK_ADMIN_AUTH_KEY = 'amazingTasteAdmin';
 const ADMIN_ROUTES = new Set(['/admin', '/admin/login']);
 
+const normalizePathname = (pathname) => {
+  const normalized = String(pathname || '').replace(/\/+$/, '');
+  return normalized || '/';
+};
+
 export const authService = {
   /**
    * Log in the admin user.
@@ -50,11 +55,13 @@ export const authService = {
   },
 
   getAdminRedirectPath(pathname = window.location.pathname) {
-    if (!ADMIN_ROUTES.has(pathname)) return null;
+    const normalizedPathname = normalizePathname(pathname);
+
+    if (!ADMIN_ROUTES.has(normalizedPathname)) return null;
     const isAuthenticated = this.isAuthenticated();
 
-    if (!isAuthenticated && pathname === '/admin') return '/admin/login';
-    if (isAuthenticated && pathname === '/admin/login') return '/admin';
+    if (!isAuthenticated && normalizedPathname === '/admin') return '/admin/login';
+    if (isAuthenticated && normalizedPathname === '/admin/login') return '/admin';
     return null;
   },
 };
