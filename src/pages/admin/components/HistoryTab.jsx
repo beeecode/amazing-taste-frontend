@@ -121,13 +121,17 @@ export default function HistoryTab({ orders, onOpenOrder }) {
       <motion.div className="admin-table-card" variants={itemVariants}>
         {historyOrders.map((order) => (
           <button className="admin-table-row" type="button" onClick={() => onOpenOrder(order)} key={order.id}>
-            <span>{order.id}</span>
-            <span>{order.customer.name}</span>
-            <span>{formatOrderDate(order)}</span>
-            <span>{order.items.map((item) => item.name).join(', ')}</span>
-            <strong>{formatPrice(calculateOrderTotal(order))}</strong>
-            <span>{order.paymentStatus}</span>
-            <OrderStatus status={order.order_status} />
+            <span className="admin-mobile-field" data-label="Order">{order.id}</span>
+            <span className="admin-mobile-field" data-label="Customer">{order.customer.name}</span>
+            <span className="admin-mobile-field" data-label="Phone">{order.customer.phone}</span>
+            <span className="admin-mobile-field" data-label="Date">{formatOrderDate(order)}</span>
+            <span className="admin-mobile-field" data-label="Items">{order.items.map((item) => item.name).join(', ')}</span>
+            <strong className="admin-mobile-field" data-label="Total">{formatPrice(calculateOrderTotal(order))}</strong>
+            <span className="admin-mobile-field" data-label="Payment">{order.paymentStatus}</span>
+            <span className="admin-mobile-field" data-label="Status">
+              <OrderStatus status={order.order_status} />
+            </span>
+            <span className="admin-mobile-row-action">View Details</span>
           </button>
         ))}
       </motion.div>

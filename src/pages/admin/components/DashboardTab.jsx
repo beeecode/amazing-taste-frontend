@@ -1,5 +1,22 @@
 import { motion } from 'framer-motion';
-import { Eye, Plus, History, Settings2 } from 'lucide-react';
+import {
+  Banknote,
+  CalendarDays,
+  ChefHat,
+  CircleCheck,
+  CircleX,
+  Clock,
+  CreditCard,
+  Eye,
+  History,
+  PackageCheck,
+  PackageX,
+  Plus,
+  Settings2,
+  ShoppingBag,
+  TrendingUp,
+  Utensils,
+} from 'lucide-react';
 import { formatPrice } from '../../../utils/formatPrice';
 import { formatOrderDate, getOrderDateKey } from '../../../utils/orderDates';
 import { calculateOrderTotal } from '../../../utils/orderTotals';
@@ -30,20 +47,25 @@ export default function DashboardTab({ orders, products, onPageChange, onOpenOrd
     .filter((order) => order.payment_status === PAYMENT_STATUSES.PAID)
     .reduce((sum, order) => sum + calculateOrderTotal(order), 0);
   const counts = getCounts(orders);
+  const pendingOrderCount =
+    (counts[ORDER_STATUSES.PAID] || 0) +
+    (counts[ORDER_STATUSES.PREPARING] || 0) +
+    (counts[ORDER_STATUSES.READY_FOR_PICKUP] || 0) +
+    (counts[ORDER_STATUSES.OUT_FOR_DELIVERY] || 0);
   
   const metrics = [
-    ['Total Orders', orders.length],
-    ["Today's Orders", todayOrders.length],
-    ['Pending Orders', (counts[ORDER_STATUSES.PAID] || 0) + (counts[ORDER_STATUSES.PREPARING] || 0) + (counts[ORDER_STATUSES.READY_FOR_PICKUP] || 0) + (counts[ORDER_STATUSES.OUT_FOR_DELIVERY] || 0)],
-    ['Completed Orders', counts[ORDER_STATUSES.COMPLETED] || 0],
-    ['Cancelled Orders', counts[ORDER_STATUSES.CANCELLED] || 0],
-    ['Preparing Orders', counts[ORDER_STATUSES.PREPARING] || 0],
-    ['Total Revenue', formatPrice(totalRevenue)],
-    ["Today's Revenue", formatPrice(todayRevenue)],
-    ['Pending Payment', formatPrice(pendingPayment)],
-    ['Most Ordered Food', 'Jollof Rice'],
-    ['Available Menu Items', products.filter((item) => item.available).length],
-    ['Unavailable Menu Items', products.filter((item) => !item.available).length],
+    { label: 'Total Orders', value: orders.length, Icon: ShoppingBag },
+    { label: "Today's Orders", value: todayOrders.length, Icon: CalendarDays },
+    { label: 'Pending Orders', value: pendingOrderCount, Icon: Clock },
+    { label: 'Completed Orders', value: counts[ORDER_STATUSES.COMPLETED] || 0, Icon: CircleCheck },
+    { label: 'Cancelled Orders', value: counts[ORDER_STATUSES.CANCELLED] || 0, Icon: CircleX },
+    { label: 'Preparing Orders', value: counts[ORDER_STATUSES.PREPARING] || 0, Icon: ChefHat },
+    { label: 'Total Revenue', value: formatPrice(totalRevenue), Icon: Banknote },
+    { label: "Today's Revenue", value: formatPrice(todayRevenue), Icon: TrendingUp },
+    { label: 'Pending Payment', value: formatPrice(pendingPayment), Icon: CreditCard },
+    { label: 'Most Ordered Food', value: 'Jollof Rice', Icon: Utensils },
+    { label: 'Available Menu Items', value: products.filter((item) => item.available).length, Icon: PackageCheck },
+    { label: 'Unavailable Menu Items', value: products.filter((item) => !item.available).length, Icon: PackageX },
   ];
   const recentOrders = orders.filter((order) => order.payment_status === PAYMENT_STATUSES.PAID).slice(0, 4);
 
@@ -53,9 +75,14 @@ export default function DashboardTab({ orders, products, onPageChange, onOpenOrd
         <h1>Dashboard</h1>
       </motion.div>
       <div className="admin-metric-grid">
-        {metrics.map(([label, value]) => (
+        {metrics.map(({ label, value, Icon }) => (
           <article className="admin-metric-card" key={label}>
-            <span>{label}</span>
+            <div className="admin-metric-card-head">
+              <span className="admin-metric-label">{label}</span>
+              <span className="admin-metric-icon" aria-hidden="true">
+                <Icon size={22} strokeWidth={1.8} />
+              </span>
+            </div>
             <strong>{value}</strong>
           </article>
         ))}
@@ -84,15 +111,19 @@ export default function DashboardTab({ orders, products, onPageChange, onOpenOrd
       <div className="admin-table-card">
         {recentOrders.map((order) => (
           <button className="admin-table-row admin-recent-row" type="button" onClick={() => onOpenOrder(order)} key={order.id}>
-            <span>{order.id}</span>
-            <span>{order.customer.name}<small>{order.customer.phone}</small></span>
-            <span>{order.items.map((item) => item.name).join(', ')}</span>
-            <strong>{formatPrice(calculateOrderTotal(order))}</strong>
-            <span>{order.paymentStatus}</span>
-            <OrderStatus status={order.order_status} />
-            <span>{order.orderType}</span>
-            <span>{order.deliveryMethod}</span>
-            <span>{formatOrderDate(order)}</span>
+            <span className="admin-mobile-field" data-label="Order">{order.id}</span>
+            <span className="admin-mobile-field" data-label="Customer">{order.customer.name}</span>
+            <span className="admin-mobile-field" data-label="Phone">{order.customer.phone}</span>
+            <span className="admin-mobile-field" data-label="Items">{order.items.map((item) => item.name).join(', ')}</span>
+            <strong className="admin-mobile-field" data-label="Total">{formatPrice(calculateOrderTotal(order))}</strong>
+            <span className="admin-mobile-field" data-label="Payment">{order.paymentStatus}</span>
+            <span className="admin-mobile-field" data-label="Status">
+              <OrderStatus status={order.order_status} />
+            </span>
+            <span className="admin-mobile-field" data-label="Timing">{order.orderType}</span>
+            <span className="admin-mobile-field" data-label="Method">{order.deliveryMethod}</span>
+            <span className="admin-mobile-field" data-label="Date">{formatOrderDate(order)}</span>
+            <span className="admin-mobile-row-action">View Details</span>
           </button>
         ))}
       </div>

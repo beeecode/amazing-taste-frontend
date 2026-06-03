@@ -97,9 +97,10 @@ function OrderCard({ order, onOpen }) {
         <OrderStatus status={order.order_status} />
       </footer>
       <div className="admin-card-meta">
-        <span>{order.customer.name}</span>
-        <span>{formatPrice(calculateOrderTotal(order))}</span>
-        <span>{order.paymentStatus}</span>
+        <span className="admin-card-meta-field" data-label="Customer">{order.customer.name}</span>
+        <span className="admin-card-meta-field" data-label="Phone">{order.customer.phone}</span>
+        <span className="admin-card-meta-field" data-label="Total">{formatPrice(calculateOrderTotal(order))}</span>
+        <span className="admin-card-meta-field" data-label="Payment">{order.paymentStatus}</span>
       </div>
       <button
         className="admin-card-view"
