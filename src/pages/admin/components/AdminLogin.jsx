@@ -1,19 +1,36 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Logo } from '../../../components/common/Logo';
+import { authService } from '../../../services/authService';
 
-export default function AdminLogin({ onLogin, showNotice }) {
-  const [form, setForm] = useState({ email: '', password: '' });
+export default function AdminLogin({ onLogin, showNotice, loading = false }) {
+  const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isProcessing = loading || isSubmitting;
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!form.email.trim() || !form.password.trim()) {
-      setError('Enter your email or username and password.');
+
+    const username = form.username.trim();
+    if (!username || !form.password.trim()) {
+      setError('Enter your username and password.');
       return;
     }
+
     setError('');
-    onLogin(form.email, form.password);
+    setIsSubmitting(true);
+
+    try {
+      const loggedIn = await onLogin(username, form.password);
+      if (!loggedIn) {
+        setError('Invalid username or password');
+      }
+    } catch (err) {
+      setError(authService.getLoginErrorMessage(err));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -27,32 +44,37 @@ export default function AdminLogin({ onLogin, showNotice }) {
         <Logo className="admin-login-logo" />
         <div>
           <h1>Admin Login</h1>
-          <p>Mock development login for managing restaurant orders and menu</p>
+          <p>Secure admin access for managing restaurant orders and menu.</p>
         </div>
         <label className="admin-form-field">
-          <span>Email or Username</span>
+          <span>Username</span>
           <input
-            value={form.email}
-            onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
-            placeholder="Enter email or username"
+            autoComplete="username"
+            disabled={isProcessing}
+            value={form.username}
+            onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))}
+            placeholder="Enter username"
           />
         </label>
         <label className="admin-form-field">
           <span>Password</span>
           <input
+            autoComplete="current-password"
+            disabled={isProcessing}
             value={form.password}
             onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
             placeholder="Enter password"
             type="password"
           />
         </label>
-        {error && <p className="admin-error-text">{error}</p>}
-        <button className="admin-primary-button" type="submit">
-          Login
+        {error && <p className="admin-error-text" role="alert">{error}</p>}
+        <button className="admin-primary-button" type="submit" disabled={isProcessing} aria-busy={isProcessing}>
+          {isProcessing ? 'Logging in...' : 'Login'}
         </button>
         <button
           className="admin-link-button"
           type="button"
+          disabled={isProcessing}
           onClick={() =>
             showNotice(
               'Password Reset',

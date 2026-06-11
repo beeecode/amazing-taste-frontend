@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { adminService } from '../services/adminService';
 import { authService } from '../services/authService';
 
@@ -6,6 +6,7 @@ const AdminContext = createContext(null);
 
 export function AdminProvider({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(() => authService.isAuthenticated());
+  const [adminProfile, setAdminProfile] = useState(() => authService.getProfile());
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -14,13 +15,36 @@ export function AdminProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [systemAlert, setSystemAlert] = useState(null);
 
-  // Synchronize authentication status
-  const login = async (email, password) => {
+  const syncAuthState = useCallback(() => {
+    const authenticated = authService.isAuthenticated();
+    setIsLoggedIn(authenticated);
+    setAdminProfile(authenticated ? authService.getProfile() : null);
+    return authenticated;
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const intervalId = window.setInterval(syncAuthState, 60000);
+    window.addEventListener('admin-auth:invalid', syncAuthState);
+    window.addEventListener('focus', syncAuthState);
+    window.addEventListener('storage', syncAuthState);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('admin-auth:invalid', syncAuthState);
+      window.removeEventListener('focus', syncAuthState);
+      window.removeEventListener('storage', syncAuthState);
+    };
+  }, [syncAuthState]);
+
+  const login = async (username, password) => {
     setLoading(true);
     try {
-      const success = await authService.login(email, password);
-      setIsLoggedIn(success);
-      return success;
+      const session = await authService.login(username, password);
+      setIsLoggedIn(true);
+      setAdminProfile(session.profile || authService.getProfile());
+      return true;
     } finally {
       setLoading(false);
     }
@@ -31,6 +55,7 @@ export function AdminProvider({ children }) {
     try {
       await authService.logout();
       setIsLoggedIn(false);
+      setAdminProfile(null);
     } finally {
       setLoading(false);
     }
@@ -39,6 +64,12 @@ export function AdminProvider({ children }) {
   // Load admin data once authenticated
   const loadAdminData = async () => {
     if (!isLoggedIn) return;
+    if (!authService.isAuthenticated()) {
+      setIsLoggedIn(false);
+      setAdminProfile(null);
+      return;
+    }
+
     setLoading(true);
     try {
       const [o, p, c, m, s] = await Promise.all([
@@ -54,7 +85,13 @@ export function AdminProvider({ children }) {
       setMessages(m);
       setSettings(s);
     } catch (err) {
-      console.error('Failed to load admin data:', err);
+      if (authService.isAuthorizationError(err)) {
+        await logout();
+        showNotice('Session Expired', 'Please log in again to continue.');
+      } else {
+        console.error('Failed to load admin data:', err);
+        showNotice('Admin Data Unavailable', 'We could not load admin data. Please refresh and try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -138,6 +175,7 @@ export function AdminProvider({ children }) {
 
   const value = {
     isLoggedIn,
+    adminProfile,
     login,
     logout,
     orders,

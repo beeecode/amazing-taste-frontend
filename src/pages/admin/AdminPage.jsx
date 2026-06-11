@@ -23,6 +23,7 @@ export default function AdminPage() {
     messages,
     setMessages,
     settings,
+    loading,
     updateSettings,
     systemAlert,
     updateOrderStatus,
@@ -73,7 +74,7 @@ export default function AdminPage() {
   if (!isLoggedIn) {
     return (
       <>
-        <AdminLogin showNotice={showNotice} onLogin={login} />
+        <AdminLogin showNotice={showNotice} onLogin={login} loading={loading} />
         <SystemAlertModal alert={systemAlert} onCancel={closeSystemAlert} onConfirm={confirmSystemAlert} />
       </>
     );

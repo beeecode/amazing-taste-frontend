@@ -2152,6 +2152,13 @@ body.menu-open {
   color: #fff;
 }
 
+.admin-primary-button:disabled,
+.admin-link-button:disabled,
+.admin-form-field input:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
 .admin-outline-danger,
 .admin-product-card footer button:last-child,
 .admin-product-card footer button:nth-child(2),
@@ -5473,8 +5480,104 @@ body {
   background: var(--figma-red);
 }
 
+.payment-callback-shell {
+  display: flex;
+  justify-content: center;
+}
+
+.payment-callback-card {
+  width: min(680px, 100%);
+  text-align: left;
+  box-shadow: 0 24px 64px rgb(33 26 22 / 8%);
+}
+
+.payment-callback-card > h2,
+.payment-callback-card > p {
+  text-align: center;
+}
+
+.payment-callback-card > p {
+  color: var(--figma-muted);
+  line-height: 1.6;
+}
+
+.payment-callback-loading {
+  display: grid !important;
+  gap: 14px !important;
+  justify-items: center;
+  text-align: center;
+}
+
+.payment-callback-loading p {
+  max-width: 360px;
+  color: var(--figma-muted);
+  line-height: 1.6;
+}
+
+.payment-callback-icon.is-success {
+  background: var(--figma-green);
+}
+
+.payment-callback-icon.is-failed {
+  background: var(--figma-red);
+}
+
+.payment-summary-grid {
+  display: grid !important;
+  gap: 10px !important;
+  padding: 18px;
+  border: 1px solid var(--figma-line);
+  border-radius: 18px;
+  background: var(--figma-soft);
+}
+
+.payment-summary-grid > div {
+  display: flex !important;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid rgb(234 213 196 / 72%);
+}
+
+.payment-summary-grid > div:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.payment-summary-grid span {
+  color: var(--figma-muted);
+  font-size: 14px;
+}
+
+.payment-summary-grid strong {
+  max-width: 58%;
+  color: var(--figma-black);
+  font-family: var(--display-font);
+  font-size: 15px;
+  text-align: right;
+}
+
+.payment-callback-actions {
+  margin-top: 4px;
+}
+
+.payment-callback-actions .place-order-button,
+.payment-callback-actions .checkout-secondary-action {
+  min-height: 52px;
+  padding: 0 22px;
+}
+
+.payment-whatsapp-action {
+  background: #25d366;
+  color: #fff;
+  text-decoration: none;
+  box-shadow: 0 18px 34px rgb(37 211 102 / 20%);
+}
+
 .order-success-modal,
 .payment-failed-card,
+.payment-callback-card,
 .checkout-detail-list,
 .summary-item,
 .admin-detail-panel,
@@ -6082,6 +6185,36 @@ body {
   .admin-metric-icon svg {
     width: 21px;
     height: 21px;
+  }
+}
+
+@media (max-width: 560px) {
+  .payment-callback-card {
+    padding: 24px 18px;
+    border-radius: 22px;
+  }
+
+  .payment-summary-grid {
+    padding: 14px;
+  }
+
+  .payment-summary-grid > div {
+    display: grid !important;
+    gap: 5px;
+  }
+
+  .payment-summary-grid strong {
+    max-width: 100%;
+    text-align: left;
+  }
+
+  .payment-callback-actions {
+    display: grid;
+  }
+
+  .payment-callback-actions .place-order-button,
+  .payment-callback-actions .checkout-secondary-action {
+    width: 100%;
   }
 }
 

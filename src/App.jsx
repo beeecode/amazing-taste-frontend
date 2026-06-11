@@ -11,6 +11,7 @@ const CheckoutPage = React.lazy(() => import('./pages/public/CheckoutPage'));
 const AdminPage = React.lazy(() => import('./pages/admin/AdminPage'));
 const OrderSuccessPage = React.lazy(() => import('./pages/public/OrderSuccessPage'));
 const PaymentFailedPage = React.lazy(() => import('./pages/public/PaymentFailedPage'));
+const PaymentCallbackPage = React.lazy(() => import('./pages/public/PaymentCallbackPage'));
 
 const PageLoader = () => (
   <div className="page-loader-shell">
@@ -26,10 +27,18 @@ export default function App() {
 
   const getPageFromLocation = () => {
     const pathname = normalizePathname(window.location.pathname);
+    const searchParams = new URLSearchParams(window.location.search);
+    const hasPaymentReference = searchParams.has('reference') || searchParams.has('trxref');
 
-    if (pathname === '/admin' || pathname === '/admin/login') return 'admin';
+    if (pathname === '/admin' || pathname.startsWith('/admin/')) return 'admin';
     if (pathname === '/checkout') return 'checkout';
     if (pathname === '/menu') return 'menu';
+    if (
+      pathname === '/payment-callback' ||
+      pathname.startsWith('/payment-callback/') ||
+      pathname.startsWith('/payment/callback') ||
+      (pathname === '/success' && hasPaymentReference)
+    ) return 'payment-callback';
     if (pathname === '/success') return 'success';
     if (pathname === '/payment-failed' || pathname === '/failed') return 'payment-failed';
     return 'landing';
@@ -90,6 +99,14 @@ export default function App() {
         return <FoodMenuPage onNavigateCheckout={navigateToCheckout} onNavigateHome={navigateHome} onNavigateMenu={navigateToMenu} />;
       case 'success':
         return <OrderSuccessPage onNavigateHome={navigateHome} onNavigateMenu={navigateToMenu} />;
+      case 'payment-callback':
+        return (
+          <PaymentCallbackPage
+            onNavigateCheckout={navigateToCheckout}
+            onNavigateHome={navigateHome}
+            onNavigateMenu={navigateToMenu}
+          />
+        );
       case 'payment-failed':
         return <PaymentFailedPage onNavigateCheckout={navigateToCheckout} onNavigateHome={navigateHome} onNavigateMenu={navigateToMenu} />;
       default:

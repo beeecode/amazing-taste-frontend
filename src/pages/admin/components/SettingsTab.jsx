@@ -133,7 +133,7 @@ export default function SettingsTab({ settings, updateSettings, onLogout, showNo
       <ChangePasswordModal
         isOpen={passwordOpen}
         onClose={() => setPasswordOpen(false)}
-        onSave={() => showNotice('Password Updated', 'Password changed locally for the mock admin flow.')}
+        onSave={() => showNotice('Password Updated', 'Password update flow will be connected with the backend later.')}
       />
     </>
   );

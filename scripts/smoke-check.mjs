@@ -2,7 +2,19 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 
 const port = 4287;
-const routes = ['/', '/menu', '/checkout', '/success', '/payment-failed', '/admin', '/admin/', '/admin/login', '/admin/login/'];
+const routes = [
+  '/',
+  '/menu',
+  '/checkout',
+  '/success',
+  '/payment-callback',
+  '/payment-callback?reference=SMOKE-REFERENCE',
+  '/payment-failed',
+  '/admin',
+  '/admin/',
+  '/admin/login',
+  '/admin/login/',
+];
 const viteBin = 'node_modules/vite/bin/vite.js';
 
 const server = spawn(

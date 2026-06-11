@@ -7,7 +7,7 @@ import { BackToTop } from '../../../components/ui/BackToTop';
 import { FigmaBackgroundIllustrations } from '../../../components/common/FigmaBackgroundIllustrations';
 import { LogoLoader } from '../../../components/common/LogoLoader';
 import { useCart } from '../../../context/CartContext';
-import { orderService } from '../../../services/orderService';
+import { getOrderId, orderService } from '../../../services/orderService';
 import { getMockSettings } from '../../../services/mockMenuStore';
 import { formatPrice } from '../../../utils/formatPrice';
 import { calculateOrderSubtotal } from '../../../utils/orderTotals';
@@ -18,7 +18,7 @@ import { siteConfig } from '../../../constants/siteConfig';
 const deliveryMethods = ['Delivery', 'Pickup'];
 const orderTypes = ['Order Now', 'Schedule Order'];
 const mealPeriods = ['Breakfast', 'Lunch', 'Dinner'];
-const paymentMethods = ['Online Payment', 'Pay on Delivery', 'Bank Transfer'];
+const paymentMethods = ['Online Payment'];
 
 const fieldInitialState = {
   fullName: '',
@@ -55,8 +55,34 @@ function getRecommendedTime(mealPeriod) {
   return '';
 }
 
+function buildPendingOrderSnapshot(order, details) {
+  return {
+    ...order,
+    order_id: getOrderId(order),
+    orderNumber: order.orderNumber || order.id || getOrderId(order),
+    customerName: details.fullName,
+    customer: {
+      ...(order.customer || {}),
+      name: details.fullName,
+      phone: details.phoneNumber,
+      email: details.emailAddress,
+      address: details.delivery_address,
+    },
+    deliveryMethod: details.delivery_method === 'delivery' ? 'Delivery' : 'Pickup',
+    paymentMethod: details.paymentMethod,
+    orderType: details.orderType,
+    mealPeriod: details.mealPeriod,
+    orderDate: details.orderDate,
+    orderTime: details.orderTime,
+    subtotal: details.subtotal,
+    deliveryFee: details.deliveryFee,
+    total: details.total,
+    items: details.items,
+  };
+}
+
 export default function CheckoutPage({ onNavigateHome, onNavigateMenu }) {
-  const { cartItems, clearCart, removeFromCart, updateCartQuantity } = useCart();
+  const { cartItems, removeFromCart, updateCartQuantity } = useCart();
   const checkoutSettings = useMemo(getCheckoutSettings, []);
   const [fields, setFields] = useState(() => ({
     ...fieldInitialState,
@@ -66,14 +92,6 @@ export default function CheckoutPage({ onNavigateHome, onNavigateMenu }) {
   const [orderType, setOrderType] = useState('Order Now');
   const [mealPeriod, setMealPeriod] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Online Payment');
-  const [pendingOrder, setPendingOrder] = useState(() => {
-    try {
-      const stored = sessionStorage.getItem('amazingTastePendingOrder');
-      return stored ? JSON.parse(stored) : null;
-    } catch {
-      return null;
-    }
-  });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -128,7 +146,7 @@ export default function CheckoutPage({ onNavigateHome, onNavigateMenu }) {
         delivery_method: deliveryMethod === 'Delivery' ? 'delivery' : 'pickup',
         delivery_address: deliveryMethod === 'Delivery' ? fields.deliveryAddress.trim() : null,
       };
-      const receipt = await orderService.placeOrder({
+      const orderDetails = {
         fullName: fields.fullName.trim(),
         phoneNumber: fields.phoneNumber.trim(),
         emailAddress: fields.emailAddress.trim(),
@@ -144,57 +162,23 @@ export default function CheckoutPage({ onNavigateHome, onNavigateMenu }) {
         subtotal,
         deliveryFee: activeDeliveryFee,
         total: grandTotal,
-      });
+      };
 
-      sessionStorage.setItem('amazingTastePendingOrder', JSON.stringify(receipt));
-      setPendingOrder(receipt);
+      // Payment flow: create the backend order first, then initialize Paystack through the backend.
+      const receipt = await orderService.placeOrder(orderDetails);
+      const orderId = getOrderId(receipt);
+      const pendingSnapshot = buildPendingOrderSnapshot(receipt, orderDetails);
+
+      sessionStorage.setItem('amazingTastePendingOrder', JSON.stringify(pendingSnapshot));
+      sessionStorage.setItem('amazingTastePendingCart', JSON.stringify(cartItems));
+
+      const paymentSession = await orderService.initializePaystack(orderId);
+      window.location.assign(paymentSession.authorization_url);
     } catch (err) {
-      setErrors((current) => ({ ...current, form: err.message }));
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const confirmMockPayment = async () => {
-    if (!pendingOrder) return;
-
-    setIsSubmitting(true);
-    try {
-      const paidOrder = await orderService.confirmMockPayment(pendingOrder.id);
-      sessionStorage.setItem(
-        'amazingTasteLastOrder',
-        JSON.stringify({
-          ...paidOrder,
-          orderNumber: paidOrder.id,
-          customerName: paidOrder.customer.name,
-          total: paidOrder.total ?? grandTotal,
-          subtotal,
-          deliveryFee: activeDeliveryFee,
-          items: cartItems,
-        }),
-      );
-
-      sessionStorage.removeItem('amazingTastePendingOrder');
-      clearCart();
-      window.history.pushState({}, '', '/success');
-      window.dispatchEvent(new Event('popstate'));
-    } catch (err) {
-      setErrors((current) => ({ ...current, form: err.message }));
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const failMockPayment = async () => {
-    if (!pendingOrder) return;
-
-    setIsSubmitting(true);
-    try {
-      const failedOrder = await orderService.failMockPayment(pendingOrder.id);
-      sessionStorage.setItem('amazingTasteLastFailedOrder', JSON.stringify(failedOrder));
-      window.history.pushState({}, '', '/payment-failed');
-      window.dispatchEvent(new Event('popstate'));
-    } finally {
+      setErrors((current) => ({
+        ...current,
+        form: err.message || 'Payment could not start. Please try again.',
+      }));
       setIsSubmitting(false);
     }
   };
@@ -439,29 +423,15 @@ export default function CheckoutPage({ onNavigateHome, onNavigateMenu }) {
                     <span>Payment Method: {paymentMethod}</span>
                   </div>
                   {errors.form ? <p className="checkout-form-error">{errors.form}</p> : null}
-                  {pendingOrder ? (
-                    <div className="checkout-payment-step">
-                      <p>
-                        Mock payment step ready for Paystack integration. Order {pendingOrder.id} is pending payment.
-                      </p>
-                      <button className="place-order-button" type="button" onClick={confirmMockPayment} disabled={isSubmitting}>
-                        {isSubmitting ? <LogoLoader compact text="Confirming payment..." /> : 'Confirm Mock Payment'}
-                      </button>
-                      <button className="checkout-secondary-action" type="button" onClick={failMockPayment} disabled={isSubmitting}>
-                        Simulate Failed Payment
-                      </button>
-                    </div>
-                  ) : (
-                    <motion.button
-                      className="place-order-button"
-                      type="submit"
-                      whileHover={{ y: -2 }}
-                      whileTap={{ scale: 0.98 }}
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? <LogoLoader compact text="Creating pending order..." /> : 'Create Order'}
-                    </motion.button>
-                  )}
+                  <motion.button
+                    className="place-order-button"
+                    type="submit"
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? <LogoLoader compact text="Starting secure payment..." /> : 'Continue to Paystack'}
+                  </motion.button>
                 </>
               ) : (
                 <div className="checkout-empty-cart">
